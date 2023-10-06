@@ -1,6 +1,7 @@
 package seocho_ai.classificationapp.dto.survey.request;
 
 import lombok.Getter;
+import seocho_ai.classificationapp.domain.survey.Survey;
 import seocho_ai.classificationapp.enums.Gender;
 
 @Getter
@@ -16,5 +17,9 @@ public class SurveyCreateRequest {
         this.age = age;
         this.gender = gender;
         this.language = language;
+    }
+
+    public Survey toSurvey() {
+        return new Survey(name, age, gender, language);
     }
 }

@@ -10,37 +10,35 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import seocho_ai.classificationapp.domain.survey.Survey;
-import seocho_ai.classificationapp.domain.survey.SurveyList;
-import seocho_ai.classificationapp.dto.converter.Survey2DicConverter;
-import seocho_ai.classificationapp.domain.dictionary.DictionaryEntry;
+import seocho_ai.classificationapp.dto.survey.request.Survey2AI;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class AIService {
 
     private final RestTemplate restTemplate;
-    private final Survey2DicConverter survey2DicConverter;
-    private final SurveyList surveyList;
 
     @Autowired
-    public AIService(RestTemplate restTemplate, Survey2DicConverter survey2DicConverter, SurveyList surveyList) {
+    public AIService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
-        this.survey2DicConverter = survey2DicConverter;
-        this.surveyList = surveyList;
     }
 
+    public void sendData2Flask(List<Survey> surveys) {
+        List<Survey2AI> survey2AIS = surveys.stream()
+                .map(survey -> new Survey2AI(survey.getId(), survey.getName(), survey.getAge(), survey.getGender().toString(), survey.getLanguage()))
+                .collect(Collectors.toList());
 
-    public void sendData2Flask() {
-        // SurveyList에서 Survey 객체 리스트 가져오기
-        List<Survey> surveys = surveyList.getSurveys();
-
-        // Survey 객체를 Dictionary로 변환
-        List<DictionaryEntry> entryList = new ArrayList<>();
-        for (Survey survey : surveys) {
-            DictionaryEntry entry = survey2DicConverter.convert(survey);
-            entryList.add(entry);
+        // Survey2AI DTO 리스트를 JSON 배열로 변환
+        ObjectMapper objectMapper = new ObjectMapper();
+        String json;
+        try {
+            json = objectMapper.writeValueAsString(survey2AIS);
+        } catch (JsonProcessingException e){
+            e.printStackTrace();
+            return;
         }
 
         // Flask 서버의 엔드포인트 URL
@@ -50,24 +48,16 @@ public class AIService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        // DictionaryEntry 객체를 JSON 형식으로 변환
-        ObjectMapper objectMapper = new ObjectMapper();
-        String entryJson;
-        try {
-            entryJson = objectMapper.writeValueAsString(entryList);
-        } catch (JsonProcessingException e) {
-            return;
-        }
 
-        // HTTP 요청을 위한 HttpENtity 생성
-        HttpEntity<String> requestEntity = new HttpEntity<>(entryJson, headers);
+        // HTTP 요청을 위한 HttpEntity 생성
+        HttpEntity<String> requestEntity = new HttpEntity<>(json, headers);
 
         // POST로 보내기
-        ResponseEntity<String> response = restTemplate.postForEntity(url, requestEntity, String.class);
+        ResponseEntity<String> response = restTemplate.postForEntity(url, requestEntity, String.class); // String.class로 응답을 받음
 
         // 응답처리
-        String resposeBody = response.getBody();
-        System.out.println("Result: " + resposeBody);
+        String responseBody = response.getBody();
+        System.out.println("Result: " + responseBody);
 
     }
 }

@@ -7,11 +7,11 @@ import seocho_ai.classificationapp.domain.survey.SurveyRepository;
 import seocho_ai.classificationapp.dto.survey.request.SurveyCreateRequest;
 
 @Service
-public class SurveyService {
+public class PersonalSurveyService {
 
     private final SurveyRepository surveyRepository;
 
-    public SurveyService(SurveyRepository surveyRepository) {
+    public PersonalSurveyService(SurveyRepository surveyRepository) {
         this.surveyRepository = surveyRepository;
     }
 
@@ -19,7 +19,8 @@ public class SurveyService {
     public void saveSurvey(SurveyCreateRequest request) {
         // 이 긴 코드를 어떻게 줄일 것인가.
         Survey survey = request.toSurvey();
-        surveyRepository.save(survey);
+        // 개인용은 db에 저장하지 않을것이므로 주석처리
+//        surveyRepository.save(survey);
     }
 
 
